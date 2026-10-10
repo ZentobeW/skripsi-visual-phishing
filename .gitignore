@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch large model weights (> 100MB exceeds GitHub hard limit)
+models/*.pt
+models/*.pth
+*.pt
+*.pth
+
+# Large archive packages
+*.zip
+*.tar.gz
+
+# MLflow tracking runs and sqlite db
+mlruns/
+.mlflow/
+*.db
+
+
+# Environment and IDE
+.env
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+*.swp
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
