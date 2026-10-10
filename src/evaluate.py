@@ -100,19 +100,27 @@ def calibrate_threshold_at_target_fpr(
 ) -> Tuple[float, Dict[str, float]]:
     """
     Neyman-Pearson Threshold Calibration.
-    Finds the operational threshold tau on the Validation set such that FPR <= target_fpr (e.g. 1%),
-    preventing security analyst alert fatigue.
+    Finds the operational threshold tau on the Validation set that MAXIMIZES Recall
+    subject to FPR <= target_fpr (e.g. 1%), preventing security analyst alert fatigue.
     """
     threshold_candidates = np.linspace(-1.0, 1.0, num=2000)
-    best_threshold = 1.0
-    best_metrics = {}
 
-    for tau in sorted(threshold_candidates, reverse=True):
+    valid_candidates = []
+    for tau in threshold_candidates:
         m = calculate_metrics_at_threshold(val_y_true, val_y_scores, tau)
         if m["fpr"] <= target_fpr:
-            best_threshold = tau
-            best_metrics = m
-            break
+            valid_candidates.append((tau, m))
+
+    if valid_candidates:
+        # Maximize Recall, breaking ties with highest tau (safer precision)
+        best_threshold, best_metrics = max(
+            valid_candidates,
+            key=lambda item: (item[1]["recall"], item[0])
+        )
+    else:
+        # Fallback: minimum FPR
+        all_metrics = [(tau, calculate_metrics_at_threshold(val_y_true, val_y_scores, tau)) for tau in threshold_candidates]
+        best_threshold, best_metrics = min(all_metrics, key=lambda item: item[1]["fpr"])
 
     logger.info(
         "Threshold Calibrated on Validation Set: tau = %.4f (Val Recall: %.4f @ Val FPR: %.4f)",
@@ -121,6 +129,7 @@ def calibrate_threshold_at_target_fpr(
         best_metrics.get("fpr", 0.0),
     )
     return best_threshold, best_metrics
+
 
 
 # ---------------------------------------------------------------------------
